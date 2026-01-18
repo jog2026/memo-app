@@ -43,3 +43,4 @@ graph LR
 A[結論] --> B[理由A]
 A --> C[理由B]
 B --> D[根拠A-1]
+</textarea> <div id="preview"></div> <script> /* ========================= Mermaid 初期化（重要） ========================= */ mermaid.initialize({ startOnLoad: false }); /* ========================= Markdown → HTML → Mermaid ========================= */ function render() { const md = document.getElementById("input").value; // Markdown → HTML const html = marked.parse(md); // XSS除去 const safe = DOMPurify.sanitize(html); // いったんHTML表示 const preview = document.getElementById("preview"); preview.innerHTML = safe; // Mermaidを明示的に実行（ここ超重要） mermaid.run({ querySelector: "#preview" }); } // 入力されたら再描画 document.getElementById("input").addEventListener("input", render); // 初回描画 render(); </script> </body> </html> ```
