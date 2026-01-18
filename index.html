@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Markdownメモ</title>
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-<!-- Markdown変換 -->
+<!-- Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- XSS対策 -->
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<!-- Mermaid -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 
 <style>
 body {
@@ -19,121 +20,86 @@ body {
   display: flex;
   height: 100vh;
 }
-
-/* 左：メモ一覧 */
 #list {
   width: 35%;
   background: #eee;
   padding: 10px;
-  box-sizing: border-box;
   overflow-y: auto;
 }
-
-/* 右：編集＋表示 */
 #editor {
   width: 65%;
   padding: 10px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
-
 .item {
   background: #fff;
   padding: 8px;
   margin-bottom: 6px;
   border-radius: 6px;
-  font-size: 14px;
 }
 .item.active {
   background: #cde4ff;
 }
-
-button {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 8px;
-}
-
-/* Markdown入力 */
 textarea {
-  width: 100%;
-  height: 40%;
+  height: 35%;
   font-size: 16px;
-  border: none;
 }
-
-/* プレビュー */
 #preview {
   flex: 1;
   background: #fff;
   margin-top: 8px;
   padding: 10px;
+  overflow: auto;
   border-radius: 6px;
-  overflow-y: auto;
-}
-
-/* Markdown用の最低限スタイル */
-#preview h1 { font-size: 20px; }
-#preview h2 { font-size: 18px; }
-#preview ul { padding-left: 20px; }
-#preview code {
-  background: #f2f2f2;
-  padding: 2px 4px;
-  border-radius: 4px;
-}
-#preview pre code {
-  display: block;
-  padding: 8px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 左：メモ一覧 -->
 <div id="list">
   <button id="add">＋ 新規メモ</button>
   <div id="items"></div>
 </div>
 
-<!-- 右：編集＋表示 -->
 <div id="editor">
-  <textarea id="memo" placeholder="Markdownで入力"></textarea>
+  <textarea id="memo" placeholder="Markdown / Mermaid対応"></textarea>
   <div id="preview"></div>
 </div>
 
 <script>
 /* ==========================
-   初期設定
+   Mermaid 初期化
    ========================== */
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "default",
+  flowchart: { useMaxWidth: false }
+});
 
-// markedの表示設定（見た目用）
+/* ==========================
+   Markdown設定
+   ========================== */
 marked.setOptions({
   breaks: true,
   mangle: false,
   headerIds: false
 });
 
-// メモ配列をlocalStorageから取得
-let memos = JSON.parse(localStorage.getItem("memos") || "[]");
-
-// 現在選択中のメモ番号
-let current = 0;
-
 /* ==========================
-   保存処理
+   データ
    ========================== */
+let memos = JSON.parse(localStorage.getItem("memos") || "[]");
+let current = 0;
 
 function save() {
   localStorage.setItem("memos", JSON.stringify(memos));
 }
 
 /* ==========================
-   表示処理
+   表示
    ========================== */
-
-// 左の一覧表示
 function renderList() {
   const items = document.getElementById("items");
   items.innerHTML = "";
@@ -143,33 +109,34 @@ function renderList() {
     div.className = "item" + (index === current ? " active" : "");
     div.textContent =
       memo.text.split("\n")[0].replace(/^#+\s*/, "") || "（無題）";
-
     div.onclick = () => {
       current = index;
       renderList();
       renderEditor();
     };
-
     items.appendChild(div);
   });
 }
 
-// 入力欄＋プレビュー更新
-function renderEditor() {
+async function renderEditor() {
   const text = memos[current]?.text || "";
   document.getElementById("memo").value = text;
 
-  // Markdown → HTML → XSS除去 → 表示
+  // Markdown → HTML
   const rawHtml = marked.parse(text);
   const safeHtml = DOMPurify.sanitize(rawHtml);
-  document.getElementById("preview").innerHTML = safeHtml;
+  const preview = document.getElementById("preview");
+  preview.innerHTML = safeHtml;
+
+  // Mermaid再描画
+  await mermaid.run({
+    querySelector: "#preview"
+  });
 }
 
 /* ==========================
    イベント
    ========================== */
-
-// 新規メモ
 document.getElementById("add").onclick = () => {
   memos.unshift({ text: "" });
   current = 0;
@@ -178,9 +145,8 @@ document.getElementById("add").onclick = () => {
   renderEditor();
 };
 
-// 入力時に自動保存＋プレビュー更新
-document.getElementById("memo").addEventListener("input", e => {
-  memos[current].text = e.target.value;
+document.getElementById("memo").addEventListener("input", () => {
+  memos[current].text = memo.value;
   save();
   renderList();
   renderEditor();
@@ -189,11 +155,9 @@ document.getElementById("memo").addEventListener("input", e => {
 /* ==========================
    初期化
    ========================== */
-
 if (memos.length === 0) {
   memos.push({ text: "" });
 }
-
 renderList();
 renderEditor();
 </script>
