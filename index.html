@@ -1,46 +1,39 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Markdown + Mermaid</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mermaid Test</title>
 
-<!-- marked (Markdown) -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- DOMPurify (XSS対策) -->
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-<!-- Mermaid -->
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Mermaid (ESMではなくUMD版) -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
 
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  margin: 0;
-  padding: 10px;
-}
-textarea {
-  width: 100%;
-  height: 35vh;
-  font-size: 16px;
-}
-#preview {
-  margin-top: 10px;
-  padding: 10px;
-  background: #fff;
-  border-radius: 6px;
-  overflow-x: auto;
-}
-</style>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+    }
+  </style>
 </head>
 
 <body>
 
-<textarea id="input">
-# サンプル
+<h2>Mermaid 動作確認</h2>
 
-```mermaid
+<!-- ★重要：class="mermaid" -->
+<div class="mermaid">
 graph LR
 A[結論] --> B[理由A]
 A --> C[理由B]
 B --> D[根拠A-1]
-</textarea> <div id="preview"></div> <script> /* ========================= Mermaid 初期化（重要） ========================= */ mermaid.initialize({ startOnLoad: false }); /* ========================= Markdown → HTML → Mermaid ========================= */ function render() { const md = document.getElementById("input").value; // Markdown → HTML const html = marked.parse(md); // XSS除去 const safe = DOMPurify.sanitize(html); // いったんHTML表示 const preview = document.getElementById("preview"); preview.innerHTML = safe; // Mermaidを明示的に実行（ここ超重要） mermaid.run({ querySelector: "#preview" }); } // 入力されたら再描画 document.getElementById("input").addEventListener("input", render); // 初回描画 render(); </script> </body> </html> ```
+</div>
+
+<script>
+  // ★重要：startOnLoad を true
+  mermaid.initialize({
+    startOnLoad: true
+  });
+</script>
+
+</body>
+</html>
